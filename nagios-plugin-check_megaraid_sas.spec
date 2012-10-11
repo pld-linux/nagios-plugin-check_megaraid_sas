@@ -3,7 +3,7 @@ Summary:	Nagios plugin to check the state of disk and logical drives attached to
 Name:		nagios-plugin-%{plugin}
 # revision from download page
 Version:	12
-Release:	3
+Release:	4
 License:	GPL v2
 Group:		Networking
 # http://exchange.nagios.org/components/com_mtree/attachment.php?link_id=680&cf_id=24
@@ -31,7 +31,7 @@ controller supported by the MegaCli tool.
 %setup -qcT
 
 install %{SOURCE0} %{plugin}
-sed -e 's#/usr/sbin/MegaCli#/sbin/MegaCli#g' %{plugin}
+%{__sed} -i -e 's#/usr/sbin/MegaCli#/sbin/MegaCli#g' %{plugin}
 
 %patch0 -p0
 

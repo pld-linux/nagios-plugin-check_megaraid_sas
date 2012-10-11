@@ -3,11 +3,12 @@ Summary:	Nagios plugin to check the state of disk and logical drives attached to
 Name:		nagios-plugin-%{plugin}
 # revision from download page
 Version:	12
-Release:	1
+Release:	2
 License:	GPL v2
 Group:		Networking
 # http://exchange.nagios.org/components/com_mtree/attachment.php?link_id=680&cf_id=24
 Source0:	check_megaraid_sas
+Patch0:		bbu.patch
 URL:		http://exchange.nagios.org/directory/Plugins/Hardware/Storage-Systems/RAID-Controllers/check_megaraid_sas/details
 Requires:	megaraid-sas
 Requires:	nagios-core
@@ -31,6 +32,8 @@ controller supported by the MegaCli tool.
 
 install %{SOURCE0} %{plugin}
 sed -e 's#/usr/sbin/MegaCli#/sbin/MegaCli#g' %{plugin}
+
+%patch0 -p0
 
 cat > nagios.cfg <<'EOF'
 # Usage:

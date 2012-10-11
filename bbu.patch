@@ -1,0 +1,118 @@
+--- check_megaraid_sas.orig	2011-04-14 13:41:43.000000000 -0400
++++ check_megaraid_sas	2011-04-14 13:37:29.959793550 -0400
+@@ -35,13 +35,14 @@
+ use lib qw(/usr/lib/nagios/plugins /usr/lib64/nagios/plugins); # possible pathes to your Nagios plugins and utils.pm
+ use utils qw(%ERRORS);
+ 
+-our($opt_h, $opt_s, $opt_o, $opt_m, $opt_p);
++our($opt_h, $opt_s, $opt_o, $opt_m, $opt_p, $opt_b);
+ 
+ 
+-getopts('hs:o:p:m:');
++getopts('bhs:o:p:m:');
+ 
+ if ( $opt_h ) {
+ 	print "Usage: $0 [-s number] [-m number] [-o number]\n";
++	print "       -b check Battery Back Up status\n";
+ 	print "       -s is how many hotspares are attached to the controller\n";
+ 	print "       -m is the number of media errors to ignore\n";
+ 	print "       -p is the predictive error count to ignore\n";
+@@ -66,6 +67,7 @@
+ my $otherallow = 0;
+ my $result = '';
+ my $status = 'OK';
++my $checkbbu = 0;
+ 
+ sub max_state ($$) {
+ 	my ($current, $compare) = @_;
+@@ -103,6 +105,9 @@
+ if ( $opt_o ) {
+ 	$otherallow = $opt_o;
+ }
++if ( $opt_b ) {
++	$checkbbu = $opt_b;
++}
+ 
+ # Some sanity checks that you actually have something where you think MegaCli is
+ (-e $megaclibin)
+@@ -121,6 +126,42 @@
+ close ADPCOUNT;
+ 
+ ADAPTER: for ( my $adp = 0; $adp < $adapters; $adp++ ) {
++	# Get the Battery Back Up state for this adapter
++	my ($bbustate);
++	if ($checkbbu) {
++		open (BBUGETSTATUS, "$megacli -AdpBbuCmd -GetBbuStatus -a$adp $megapostopt |") 
++			|| exitreport('UNKNOWN', "error: Could not execute $megacli -AdpBbuCmd -GetBbuStatus -a$adp $megapostopt");
++		
++		my ($bbucharging, $bbufullycharged, $bburelativecharge, $bbuexitcode);
++		while (<BBUGETSTATUS>) {
++			# Charging Status
++			if ( m/Charging Status\s*:\s*(\w+)/i ) {
++				$bbucharging = $1;
++			} elsif ( m/Fully Charged\s*:\s*(\w+)/i ) {
++				$bbufullycharged = $1;
++			} elsif ( m/Relative State of Charge\s*:\s*(\w+)/i ) {
++				$bburelativecharge = $1;
++			} elsif ( m/Exit Code\s*:\s*(\w+)/i ) {
++				$bbuexitcode = $1;
++			}
++		}
++		close BBUGETSTATUS;
++
++		# Determine the BBU state
++		if ( $bbuexitcode ne '0x00' ) {
++			$bbustate = 'NOT FOUND';
++			$status = 'CRITICAL';
++		} elsif ( $bbucharging ne 'None' ) {
++			$bbustate = 'Charging (' . $bburelativecharge . '%)';
++			$status = 'WARNING';
++		} elsif ( $bbufullycharged ne 'Yes' ) {
++			$bbustate = 'Not Charging (' . $bburelativecharge . '%)';
++			$status = 'WARNING';
++		} else {
++			$bbustate = 'Charged (' . $bburelativecharge . '%)';
++		}
++	}
++
+ 	# Get the number of logical drives on this adapter
+ 	open (LDGETNUM, "$megacli -LdGetNum -a$adp $megapostopt |") 
+ 		|| exitreport('UNKNOWN', "error: Could not execute $megacli -LdGetNum -a$adp $megapostopt");
+@@ -138,8 +179,9 @@
+ 		# Get info on this particular logical drive
+ 		open (LDINFO, "$megacli -LdInfo -L$ld -a$adp $megapostopt |") 
+ 			|| exitreport('UNKNOWN', "error: Could not execute $megacli -LdInfo -L$ld -a$adp $megapostopt ");
+-			
+-		my ($size, $unit, $raidlevel, $ldpdcount, $state, $spandepth);
++		
++		my $consistency_output = '';
++		my ($size, $unit, $raidlevel, $ldpdcount, $state, $spandepth, $consistency_percent, $consistency_minutes);
+ 		while (<LDINFO>) {
+ 			if ( m/Size\s*:\s*((\d+\.?\d*)\s*(MB|GB|TB))/ ) {
+ 				$size = $2;
+@@ -160,6 +202,9 @@
+ 				$spandepth = $1;
+ 			} elsif ( m/RAID Level\s*: Primary-(\d)/ ) {
+ 				$raidlevel = $1;
++			} elsif ( m/\s+Check Consistency\s+:\s+Completed\s+(\d+)%,\s+Taken\s+(\d+)\s+min/ ) {
++				$consistency_percent = $1;
++				$consistency_minutes = $2;
+ 			}
+ 		}
+ 		close LDINFO;
+@@ -172,8 +217,14 @@
+ 			}
+ 		}
+ 		
+-		$result .= "$adp:$ld:RAID-$raidlevel:$ldpdcount drives:$size$unit:$state ";
+-		
++ 		if ($consistency_percent) {
++ 			$status = 'WARNING';
++ 			$consistency_output = "CC ${consistency_percent}% ${consistency_minutes}m:";
++ 		}
++  		
++		$result .= "$adp:";
++		$result .= "BBU $bbustate:" if ($checkbbu);
++ 		$result .= "$ld:RAID-$raidlevel:$ldpdcount drives:$size$unit:$consistency_output$state ";
+ 	} #LDISK
+ 	close LDINFO;

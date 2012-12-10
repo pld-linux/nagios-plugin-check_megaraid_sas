@@ -1,0 +1,13 @@
+diff -dur nagios-plugin-check_megaraid_sas-12.orig/check_megaraid_sas nagios-plugin-check_megaraid_sas-12/check_megaraid_sas
+--- nagios-plugin-check_megaraid_sas-12.orig/check_megaraid_sas	2012-12-10 13:45:30.000000000 +0100
++++ nagios-plugin-check_megaraid_sas-12/check_megaraid_sas	2012-12-10 13:46:27.000000000 +0100
+@@ -183,7 +183,7 @@
+ 		my $consistency_output = '';
+ 		my ($size, $unit, $raidlevel, $ldpdcount, $state, $spandepth, $consistency_percent, $consistency_minutes);
+ 		while (<LDINFO>) {
+-			if ( m/Size\s*:\s*((\d+\.?\d*)\s*(MB|GB|TB))/ ) {
++			if ( m/^Size\s*:\s*((\d+\.?\d*)\s*(MB|GB|TB))/ ) {
+ 				$size = $2;
+ 				$unit = $3;
+ 				# Adjust MB to GB if that's what we got
+

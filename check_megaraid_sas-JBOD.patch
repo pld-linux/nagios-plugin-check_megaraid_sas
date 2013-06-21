@@ -1,0 +1,12 @@
+diff -dur nagios-plugin-check_megaraid_sas-12.orig/check_megaraid_sas nagios-plugin-check_megaraid_sas-12/check_megaraid_sas
+--- nagios-plugin-check_megaraid_sas-12.orig/check_megaraid_sas	2013-06-21 10:58:28.000000000 +0200
++++ nagios-plugin-check_megaraid_sas-12/check_megaraid_sas	2013-06-21 11:04:40.000000000 +0200
+@@ -251,6 +251,8 @@
+ 				$hotsparecount++;
+ 			} elsif ( $fwstate eq 'Online' ) {
+ 				# Do nothing
++			} elsif ( $fwstate eq 'JBOD' ) {
++				# Do nothing
+ 			} elsif ( $fwstate eq 'Unconfigured' ) {
+ 				# A drive not in anything, or a non drive device
+ 				$pdcount--;

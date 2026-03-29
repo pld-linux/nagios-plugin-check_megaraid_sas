@@ -1,6 +1,7 @@
---- check_megaraid_sas.orig	2011-04-14 13:41:43.000000000 -0400
-+++ check_megaraid_sas	2011-04-14 13:37:29.959793550 -0400
-@@ -35,13 +35,14 @@
+diff -urNp -x '*.orig' nagios-plugin-check_megaraid_sas-12.org/check_megaraid_sas nagios-plugin-check_megaraid_sas-12/check_megaraid_sas
+--- nagios-plugin-check_megaraid_sas-12.org/check_megaraid_sas	2026-03-29 01:14:32.755219490 +0100
++++ nagios-plugin-check_megaraid_sas-12/check_megaraid_sas	2026-03-29 01:14:32.823793982 +0100
+@@ -35,13 +35,14 @@ use Getopt::Std;
  use lib qw(/usr/lib/nagios/plugins /usr/lib64/nagios/plugins); # possible pathes to your Nagios plugins and utils.pm
  use utils qw(%ERRORS);
  
@@ -17,7 +18,7 @@
  	print "       -s is how many hotspares are attached to the controller\n";
  	print "       -m is the number of media errors to ignore\n";
  	print "       -p is the predictive error count to ignore\n";
-@@ -66,6 +67,7 @@
+@@ -66,6 +67,7 @@ my $othererrors = 0;
  my $otherallow = 0;
  my $result = '';
  my $status = 'OK';
@@ -25,7 +26,7 @@
  
  sub max_state ($$) {
  	my ($current, $compare) = @_;
-@@ -103,6 +105,9 @@
+@@ -103,6 +105,9 @@ if ( $opt_p ) {
  if ( $opt_o ) {
  	$otherallow = $opt_o;
  }
@@ -35,7 +36,7 @@
  
  # Some sanity checks that you actually have something where you think MegaCli is
  (-e $megaclibin)
-@@ -121,6 +126,42 @@
+@@ -121,6 +126,42 @@ while (<ADPCOUNT>) {
  close ADPCOUNT;
  
  ADAPTER: for ( my $adp = 0; $adp < $adapters; $adp++ ) {
@@ -78,7 +79,7 @@
  	# Get the number of logical drives on this adapter
  	open (LDGETNUM, "$megacli -LdGetNum -a$adp $megapostopt |") 
  		|| exitreport('UNKNOWN', "error: Could not execute $megacli -LdGetNum -a$adp $megapostopt");
-@@ -138,8 +179,9 @@
+@@ -138,8 +179,9 @@ ADAPTER: for ( my $adp = 0; $adp < $adap
  		# Get info on this particular logical drive
  		open (LDINFO, "$megacli -LdInfo -L$ld -a$adp $megapostopt |") 
  			|| exitreport('UNKNOWN', "error: Could not execute $megacli -LdInfo -L$ld -a$adp $megapostopt ");
@@ -90,7 +91,7 @@
  		while (<LDINFO>) {
  			if ( m/Size\s*:\s*((\d+\.?\d*)\s*(MB|GB|TB))/ ) {
  				$size = $2;
-@@ -160,6 +202,9 @@
+@@ -160,6 +202,9 @@ ADAPTER: for ( my $adp = 0; $adp < $adap
  				$spandepth = $1;
  			} elsif ( m/RAID Level\s*: Primary-(\d)/ ) {
  				$raidlevel = $1;
@@ -100,7 +101,7 @@
  			}
  		}
  		close LDINFO;
-@@ -172,8 +217,14 @@
+@@ -172,8 +217,14 @@ ADAPTER: for ( my $adp = 0; $adp < $adap
  			}
  		}
  		
@@ -116,3 +117,4 @@
 + 		$result .= "$ld:RAID-$raidlevel:$ldpdcount drives:$size$unit:$consistency_output$state ";
  	} #LDISK
  	close LDINFO;
+ 	

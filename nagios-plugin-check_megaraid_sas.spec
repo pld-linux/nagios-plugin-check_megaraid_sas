@@ -3,7 +3,7 @@ Summary:	Nagios plugin to check the state of disk and logical drives attached to
 Name:		nagios-plugin-%{plugin}
 # revision from download page
 Version:	12
-Release:	7
+Release:	8
 License:	GPL v2
 Group:		Networking
 # http://exchange.nagios.org/components/com_mtree/attachment.php?link_id=680&cf_id=24
@@ -20,6 +20,8 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %define		plugindir	%{_prefix}/lib/nagios/plugins
 %define		_sysconfdir	/etc/nagios/plugins
+
+%define		_noautoreq_perl		utils
 
 %description
 A plugin to check the health and status of disk and logical drives
